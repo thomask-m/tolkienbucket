@@ -6,5 +6,5 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable(validate validate.cpp)
-target_compile_options(validate PRIVATE -Werror -Wall -Weffc++ -Wextra -Wsign-conversion)
+target_compile_options(validate PRIVATE -fsanitize=thread -g -O1 -Werror -Wall -Weffc++ -Wextra -Wsign-conversion)
 
