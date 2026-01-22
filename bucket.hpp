@@ -67,8 +67,8 @@ class MtTokenBucket {
   void fill() {
     // `fill` is driven by one thread and one thread only: the refill worker
     // thread.
+    std::unique_lock<std::mutex> lock(refill_worker_mut_);
     while (refill_worker_running_) {
-      std::unique_lock<std::mutex> lock(refill_worker_mut_);
       refill_worker_cv_.wait(lock, [this] { return waiting_threads_ > 0; });
 
       const auto now = std::chrono::steady_clock::now();
