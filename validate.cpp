@@ -21,6 +21,9 @@ void token_taker(uint32_t n) {
 }
 
 int main() {
+#ifdef __SANITIZE_THREAD__
+  std::cout << "fsanitize=thread being used" << std::endl;
+#endif
   std::thread a(token_taker, 1);
   std::thread b(token_taker, 1);
   std::thread c(token_taker, 1);

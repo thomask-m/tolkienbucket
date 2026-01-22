@@ -81,7 +81,11 @@ class MtTokenBucket {
       : fill_rate_(fill_rate),
         capacity_(capacity),
         num_tokens_(capacity),
-        time_last_filled_(std::chrono::steady_clock::now()) {
+        time_last_filled_(std::chrono::steady_clock::now()),
+	token_cv_(),
+	token_mut_(),
+	waiting_threads_cv_(),
+	waiting_threads_mut_() {
     refill_worker_ = std::thread(&MtTokenBucket::fill, this);
   }
 
