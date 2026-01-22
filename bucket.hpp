@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iostream>
 #include <mutex>
+#include <thread>
 
 class TokenBucket {
  private:
@@ -26,7 +27,6 @@ class TokenBucket {
   bool take(uint32_t n) {
     const auto now = std::chrono::steady_clock::now();
     const std::chrono::duration<double> time_since{now - m_time_last_filled};
-    m_time_last_filled = now;
     const uint32_t potential_amount =
         static_cast<uint32_t>(time_since.count() * m_fill_rate);
     m_num_tokens = std::min(m_capacity, m_num_tokens + potential_amount);
@@ -35,6 +35,7 @@ class TokenBucket {
       return false;
     } else {
       m_num_tokens -= n;
+      m_time_last_filled = now;
       return true;
     }
   }
@@ -71,6 +72,7 @@ class MtTokenBucket {
         token_cv_.notify_all();
         tok_lock.unlock();
       } else {
+        // is sleeping for 1 second at a time really the best way? :thinking:
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
@@ -82,10 +84,10 @@ class MtTokenBucket {
         capacity_(capacity),
         num_tokens_(capacity),
         time_last_filled_(std::chrono::steady_clock::now()),
-	token_cv_(),
-	token_mut_(),
-	waiting_threads_cv_(),
-	waiting_threads_mut_() {
+        token_cv_(),
+        token_mut_(),
+        waiting_threads_cv_(),
+        waiting_threads_mut_() {
     refill_worker_ = std::thread(&MtTokenBucket::fill, this);
   }
 
