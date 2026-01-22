@@ -97,9 +97,7 @@ class MtTokenBucket {
     std::unique_lock lock(token_mut_);
     ++waiting_threads_;
     waiting_threads_cv_.notify_one();
-    token_cv_.wait(lock, [=] {
-      return n <= num_tokens_;
-    });
+    token_cv_.wait(lock, [=] { return n <= num_tokens_; });
     --waiting_threads_;
     num_tokens_ -= n;
   }
