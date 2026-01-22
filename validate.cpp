@@ -6,18 +6,12 @@
 #include "bucket.hpp"
 
 MtTokenBucket mt(1, 5);
-std::mutex mut;
 
 void token_taker(uint32_t n) {
-  {
-    std::lock_guard<std::mutex> print_lock(mut);
-    std::cout << "thread start: " << std::this_thread::get_id() << std::endl;
-  }
+  const std::thread::id& tid = std::this_thread::get_id();
+  atomic_print(tid, "starting...");
   mt.take(n);
-  {
-    std::lock_guard<std::mutex> print_lock(mut);
-    std::cout << "thread ending: " << std::this_thread::get_id() << std::endl;
-  }
+  atomic_print(tid, "ending...");
 }
 
 int main() {

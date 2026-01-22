@@ -1,15 +1,16 @@
 ## tolkien bucket
 
-Exploration in concurrent programming in C++ (and also learning C++ in general).
+An exercise in C++ concurrent programming (and learning C++ in general).
 
-TODOs are to come up with a way rather than sleeping for 1 second to restart refill thread and iron our concurrency issues.
+The bucket offers a non-boolean `take` API that differs from the traditional boolean `take` of a "token" bucket - threads are blocked until the bucket is refilled.
+
+Playing around with a fill rate based on seconds rather than a smaller unit of time so I can observe its behavior with my human eyes.
 
 ### build and run ./validate
 ```
 mkdir build
 cd build
-
-cmake -DCMAKE_CXX_COMPILER=/usr/bin/g++ ..
+cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=/usr/bin/g++ ..
 cmake --build .
 ./validate
 ```

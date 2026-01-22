@@ -10,6 +10,13 @@
 #include <mutex>
 #include <thread>
 
+std::mutex cout_mut;
+// For debugging purposes
+void atomic_print(const std::thread::id& thread_id, const std::string& message) {
+  std::lock_guard<std::mutex> lock(cout_mut);
+  std::cout << "Thread " << thread_id << ": " << message << std::endl;
+}
+
 class TokenBucket {
  private:
   uint32_t m_fill_rate;
@@ -53,13 +60,14 @@ class MtTokenBucket {
   std::thread refill_worker_;
   std::atomic<bool> refill_worker_running_{true};
   std::atomic<uint32_t> waiting_threads_{0};
-  std::condition_variable waiting_threads_cv_;
-  std::mutex waiting_threads_mut_;
+  std::condition_variable refill_worker_cv_;
+  std::mutex refill_worker_mut_;
 
   void fill() {
+    // `fill` is driven by one thread and one thread only: the refill worker thread.
     while (refill_worker_running_) {
-      std::unique_lock<std::mutex> lock(waiting_threads_mut_);
-      waiting_threads_cv_.wait(lock, [this] { return waiting_threads_ > 0; });
+      std::unique_lock<std::mutex> lock(refill_worker_mut_);
+      refill_worker_cv_.wait(lock, [this] { return waiting_threads_ > 0; });
 
       const auto now = std::chrono::steady_clock::now();
       const std::chrono::duration<double> time_since{now - time_last_filled_};
@@ -72,7 +80,10 @@ class MtTokenBucket {
         token_cv_.notify_all();
         tok_lock.unlock();
       } else {
-        // is sleeping for 1 second at a time really the best way? :thinking:
+        // if we are not going to update the token bucket count, sleep a bit
+        // more, then retry the refill after waking up.
+        // TODO: is sleeping for 1 second at a time really the best way to fill up
+        // on tokens? :thinking:
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
@@ -86,8 +97,8 @@ class MtTokenBucket {
         time_last_filled_(std::chrono::steady_clock::now()),
         token_cv_(),
         token_mut_(),
-        waiting_threads_cv_(),
-        waiting_threads_mut_() {
+        refill_worker_cv_(),
+        refill_worker_mut_() {
     refill_worker_ = std::thread(&MtTokenBucket::fill, this);
   }
 
@@ -100,11 +111,12 @@ class MtTokenBucket {
 
   void take(uint32_t n) {
     assert(n <= capacity_);
+
     std::unique_lock lock(token_mut_);
     ++waiting_threads_;
-    waiting_threads_cv_.notify_one();
+    refill_worker_cv_.notify_one();
     token_cv_.wait(lock, [=] { return n <= num_tokens_; });
-    --waiting_threads_;
     num_tokens_ -= n;
+    --waiting_threads_;
   }
 };
