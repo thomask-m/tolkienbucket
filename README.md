@@ -1,4 +1,4 @@
-## token bucket
+## tolkien bucket
 
 Exploration in concurrent programming in C++ (and also learning C++ in general).
 
