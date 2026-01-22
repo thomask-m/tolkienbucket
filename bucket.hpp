@@ -12,7 +12,8 @@
 
 std::mutex cout_mut;
 // For debugging purposes
-void atomic_print(const std::thread::id& thread_id, const std::string& message) {
+void atomic_print(const std::thread::id& thread_id,
+                  const std::string& message) {
   std::lock_guard<std::mutex> lock(cout_mut);
   std::cout << "Thread " << thread_id << ": " << message << std::endl;
 }
@@ -64,7 +65,8 @@ class MtTokenBucket {
   std::mutex refill_worker_mut_;
 
   void fill() {
-    // `fill` is driven by one thread and one thread only: the refill worker thread.
+    // `fill` is driven by one thread and one thread only: the refill worker
+    // thread.
     while (refill_worker_running_) {
       std::unique_lock<std::mutex> lock(refill_worker_mut_);
       refill_worker_cv_.wait(lock, [this] { return waiting_threads_ > 0; });
@@ -82,8 +84,8 @@ class MtTokenBucket {
       } else {
         // if we are not going to update the token bucket count, sleep a bit
         // more, then retry the refill after waking up.
-        // TODO: is sleeping for 1 second at a time really the best way to fill up
-        // on tokens? :thinking:
+        // TODO: is sleeping for 1 second at a time really the best way to fill
+        // up on tokens? :thinking:
         std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
