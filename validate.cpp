@@ -2,6 +2,7 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #include "bucket.hpp"
 
@@ -19,7 +20,7 @@ int main() {
 #ifdef __SANITIZE_THREAD__
   std::cout << "fsanitize=thread being used" << std::endl;
 #endif
-  const auto num_threads = 20;
+  const int num_threads = 20;
   std::vector<std::thread> threads;
   threads.reserve(num_threads);
 
